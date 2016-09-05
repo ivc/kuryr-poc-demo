@@ -1,0 +1,55 @@
+---
+- name: clone kuryr
+  become: true
+  git:
+    repo: https://github.com/ivc/kuryr
+    version: lbaasv2-poc
+    dest: /opt/kuryr
+    force: yes
+- name: fix kuryr libexec permissions
+  become: true
+  file:
+    dest: /opt/kuryr/usr/libexec/kuryr
+    recurse: yes
+    mode: 0755
+- name: install python3
+  become: true
+  package:
+    name: "{{ item }}"
+    state: present
+  with_items:
+  - python3
+  - python3-dev
+  - python3-pip
+  - build-essential
+- name: create venv
+  become: true
+  command: virtualenv -p python3 /opt/kuryr/.venv
+  args:
+    creates: /opt/kuryr/.venv
+- name: setup venv
+  become: true
+  command: /opt/kuryr/.venv/bin/pip install -U {{ item }}
+  args:
+    creates: /opt/kuryr/.venv/lib/python3.4/site-packages/kuryr
+  with_items:
+  - setuptools
+  - /opt/kuryr
+- name: cni config
+  become: true
+  copy:
+    src: kuryr.conf
+    dest: /opt/cni
+- name: kuryr bin
+  become: true
+  template:
+    src: kuryr.j2
+    dest: /opt/cni/bin/kuryr
+    mode: 0755
+- name: copy start_raven
+  become: true
+  template:
+    src: start_raven.sh.j2
+    dest: /home/stack/start_raven.sh
+    mode: 0755
+    owner: stack

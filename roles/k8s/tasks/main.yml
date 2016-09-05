@@ -1,0 +1,86 @@
+---
+- name: docker repo key
+  become: true
+  apt_key:
+    keyserver: 'hkp://p80.pool.sks-keyservers.net:80'
+    id: 58118E89F3A912897C070ADBF76221572C52609D
+- name: docker repo
+  become: true
+  apt_repository:
+    repo: 'deb https://apt.dockerproject.org/repo ubuntu-trusty main'
+    filename: docker
+- name: install linux-image-extra
+  become: true
+  package:
+    name: "linux-image-extra-{{ ansible_kernel }}"
+    state: present
+- name: install docker-engine
+  become: true
+  package:
+    name: docker-engine
+    state: present
+- name: download k8s binaries
+  become: true
+  get_url:
+    dest: /usr/local/bin
+    url: "http://storage.googleapis.com/kubernetes-release/release/{{ k8s_version }}/bin/linux/amd64/{{ item }}"
+    mode: 0755
+  with_items:
+  - kubelet
+  - kubectl
+- name: download k8s init script
+  become: true
+  copy:
+    dest: /etc/init.d/kubelet
+    src: kubelet.init
+    mode: 0755
+- name: k8s service defaults
+  become: true
+  template:
+    src: kubelet.default.j2
+    dest: /etc/default/kubelet
+- name: create /etc/kubernetes/manifests
+  become: true
+  file:
+    name: /etc/kubernetes/manifests
+    state: directory
+- name: k8s kube config
+  become: true
+  template:
+    src: kube.conf
+    dest: /etc/kubernetes/config
+- name: k8s .kube dir for stack
+  become: true
+  file:
+    path: /home/stack/.kube
+    state: directory
+    owner: stack
+- name: k8s kube config for stack
+  become: true
+  template:
+    src: kube.conf
+    dest: /home/stack/.kube/config
+    owner: stack
+- name: copy manifests on master
+  become: true
+  when: k8s_master == ansible_host
+  template:
+    src: "{{ item }}.manifest.j2"
+    dest: "/etc/kubernetes/manifests/{{ item }}"
+  with_items:
+  - etcd
+  - master
+- name: register kubelet service
+  become: true
+  command: update-rc.d kubelet defaults
+- name: create nsenter
+  become: true
+  command: docker run --rm -v /usr/local/bin:/target jpetazzo/nsenter
+  args:
+    creates: /usr/local/bin/nsenter
+- name: link nsenter in /usr/bin
+  become: true
+  file:
+    src: /usr/local/bin/nsenter
+    path: /usr/bin/nsenter
+    state: link

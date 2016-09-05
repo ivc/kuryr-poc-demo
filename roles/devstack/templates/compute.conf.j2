@@ -1,0 +1,13 @@
+[[local|localrc]]
+LOG_COLOR=False
+
+ADMIN_PASSWORD=secret
+DATABASE_PASSWORD=secret
+RABBIT_PASSWORD=secret
+SERVICE_PASSWORD=secret
+
+ENABLED_SERVICES=n-cpu,rabbit,neutron,q-agt,n-novnc
+SERVICE_HOST={{ devstack_master }}
+MYSQL_HOST=$SERVICE_HOST
+RABBIT_HOST=$SERVICE_HOST
+Q_HOST=$SERVICE_HOST

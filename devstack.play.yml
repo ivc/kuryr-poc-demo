@@ -1,0 +1,9 @@
+---
+- hosts: kuryr
+  vars:
+    devstack_master: "{{ hostvars['kuryr-ctl']['ansible_host'] }}"
+    k8s_master: "{{ hostvars['kuryr-ctl']['ansible_host'] }}"
+    k8s_version: "v1.3.4"
+    k8s_ip_range: "10.30.0.0/24"
+  roles:
+  - devstack

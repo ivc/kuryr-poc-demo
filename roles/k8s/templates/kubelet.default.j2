@@ -1,0 +1,9 @@
+DAEMON_ARGS="\
+{{ (k8s_master == ansible_host) | ternary('--register-node=false', '--api-servers=http://' + k8s_master + ':8080')}} \
+--config=/etc/kubernetes/manifests \
+--allow-privileged \
+--v=2 \
+--kubeconfig=/etc/kubernetes/config \
+--network-plugin=cni \
+--network-plugin-dir=/opt/cni \
+"

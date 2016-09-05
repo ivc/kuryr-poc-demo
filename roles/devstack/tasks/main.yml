@@ -1,0 +1,66 @@
+---
+- name: install packages
+  become: true
+  package: name={{ item }} state=present
+  with_items:
+  - git
+  - screen
+  - sudo
+- name: reset localhost in /etc/hosts
+  become: true
+  lineinfile:
+    line: 127.0.0.1 localhost.localdomain localhost
+    regexp: "127\\.0\\.0\\.1"
+    dest: /etc/hosts
+- name: reset hostname in /etc/hosts
+  become: true
+  lineinfile:
+    line: "{{ ansible_host }} {{ inventory_hostname }}"
+    regexp: "{{ inventory_hostname | regex_escape }}"
+    dest: /etc/hosts
+- name: create stack group
+  become: true
+  group: name=stack
+- name: create stack user
+  become: true
+  user: name=stack group=stack shell=/bin/bash
+- name: enable passwordless sudo for stack
+  become: true
+  lineinfile:
+    dest: /etc/sudoers
+    line: "stack ALL=(ALL:ALL) NOPASSWD:ALL"
+- name: create ssh dir
+  become: true
+  file:
+    path: ~stack/.ssh
+    state: directory
+    owner: stack
+    group: stack
+- name: copy public key
+  become: true
+  copy:
+    src: ~/.ssh/id_rsa.pub
+    dest: ~stack/.ssh/authorized_keys
+    owner: stack
+    group: stack
+- name: prepare directories
+  become: true
+  file:
+    path: "{{ item }}"
+    state: directory
+    owner: stack
+    group: stack
+  with_items:
+    - "/opt/stack"
+    - "/opt/devstack"
+- name: checkout devstack
+  command: sudo -u stack git clone "https://github.com/openstack-dev/devstack.git" -b "stable/mitaka" /opt/devstack
+  args:
+    creates: /opt/devstack/stack.sh
+- name: create local.conf
+  become: true
+  template:
+    src: "{{ (devstack_master == ansible_host) | ternary('controller', 'compute') }}.conf.j2"
+    dest: /opt/devstack/local.conf
+    owner: stack
+    group: stack

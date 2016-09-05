@@ -1,0 +1,10 @@
+export SERVICE_CLUSTER_IP_RANGE=10.30.0.0/24
+export SERVICE_USER=admin
+export SERVICE_TENANT_NAME=admin
+export SERVICE_PASSWORD=secret
+export IDENTITY_URL=http://{{ devstack_master }}:35357/v2.0
+export OS_URL=http://{{ devstack_master }}:9696
+export K8S_API=http://{{ k8s_master }}:8080
+export LOG_LEVEL=DEBUG
+. /opt/kuryr/.venv/bin/activate
+raven --logfile /tmp/raven.log

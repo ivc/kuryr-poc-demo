@@ -1,0 +1,27 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: raven
+  namespace: kube-system
+spec:
+  hostNetwork: true
+  containers:
+  - name: raven
+    image: kuryr/raven:0.1
+    env:
+    - name: SERVICE_CLUSTER_IP_RANGE
+      value: {{ k8s_ip_range }}
+    - name: SERVICE_USER
+      value: admin
+    - name: SERVICE_TENANT_NAME
+      value: admin
+    - name: SERVICE_PASSWORD
+      value: secret
+    - name: IDENTITY_URL
+      value: http://{{ devstack_master }}:35357/v2.0
+    - name: OS_URL
+      value: http://{{ devstack_master }}:9696
+    - name: K8S_API
+      value: http://{{ k8s_master }}:8080
+    - name: LOG_LEVEL
+      value: DEBUG

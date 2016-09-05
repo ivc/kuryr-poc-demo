@@ -1,0 +1,19 @@
+#!/opt/kuryr/.venv/bin/python3
+import os
+os.environ['K8S_API'] = 'http://{{ k8s_master }}:8080'
+from kuryr.common import config
+config.CONF.bindir = '/opt/kuryr/usr/libexec/kuryr'
+from kuryr.cni.driver import run_driver
+import traceback
+import sys
+with open('/var/log/kuryr.cni.log', 'a') as log:
+        log.write(str(os.environ))
+        try:
+          ret = run_driver()
+          log.write(ret)
+          log.write("\n")
+          print(ret)
+        except Exception as e:
+          log.write('CNI aborted due to exception: {}\n'.format(e))
+          print(e)
+          sys.exit(3)
